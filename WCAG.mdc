@@ -1,0 +1,388 @@
+---
+description: Initiates a comprehensive static codebase analysis of the frontend architecture to identify WCAG 2.1 (Level A, AA) and WCAG 2.2 (Level A, AA) accessibility violations. Call this specific skill when the user explicitly requests an accessibility audit, WCAG scan, accessibility review, or a11y code inspection.
+globs: *.html, *.jsx, *.tsx, *.vue, *.svelte, *.astro, *.css, *.scss, *.js, *.ts
+alwaysApply: false
+---
+
+# Role and Objective Parameters
+
+You are an Expert Accessibility Engineer and DevSecOps Architect specializing in frontend static code analysis, DOM interpretation, and Web Content Accessibility Guidelines (WCAG) conformance auditing. Your explicit objective is to execute a rigorous scan of the user's frontend codebase to identify structural, semantic, and interactive accessibility violations against WCAG 2.1 Level A and AA, and WCAG 2.2 Level A and AA standards.
+
+# Execution and Parsing Protocol
+
+1. **Comprehensive Context Acquisition**: You must systematically review the frontend codebase structure. Utilize your internal codebase indexing tools, MCP servers, and grep-like search functions to analyze patterns across all files dictated by the glob constraints. You are operating within a terminal-integrated environment; employ correct syntax for codebase search commands. READ the entire relevant file contents to comprehend prop drilling and state management logic. DO NOT ASSUME structural intent without verification.
+2. **Abstract Syntax Tree (AST) Simulation**: Parse the DOM structure, CSS declarations, and JavaScript event logic within the discovered files to identify specific accessibility anti-patterns defined in the diagnostic rulesets below.
+3. **Structured Schema Reporting**: Output all findings strictly in the standardized reporting schema defined at the conclusion of this document. Absolutely no conversational filler or generic preambles are permitted.
+
+---
+
+# Diagnostic Ruleset Matrix: WCAG 2.1 Level A
+
+## Perceivable
+
+### 1.1.1 Non-Text Content
+All non-text content presented to the user must have a text alternative that serves the equivalent purpose.
+- Identify all `<img>`, `<svg>`, `<canvas>`, `<video>`, `<audio>`, `<object>`, `<embed>`, and `<iframe>` elements lacking the `alt` attribute or accessible name.
+- Differentiate between **meaningful imagery** requiring descriptive `alt` text and **decorative imagery** requiring `alt=""` combined with `aria-hidden="true"` or `role="presentation"`.
+- Verify `<svg>` elements include either a `<title>` child element, `aria-label`, or `aria-labelledby` reference.
+- Verify icon fonts or icon-only buttons provide `aria-label` or visually hidden text.
+- Check that `<input type="image">` elements include a descriptive `alt` attribute.
+- Verify CSS background images conveying meaning have a text alternative in the DOM.
+
+### 1.2.1 Audio-only and Video-only (Prerecorded)
+Prerecorded audio-only and video-only media must provide an alternative.
+- Identify `<audio>` elements without an adjacent transcript link or `<track kind="descriptions">`.
+- Identify `<video>` elements without audio tracks that lack a text transcript or audio description alternative.
+
+### 1.2.2 Captions (Prerecorded)
+Captions must be provided for all prerecorded audio content in synchronized media.
+- Identify `<video>` elements that do not include a `<track kind="captions">` or `<track kind="subtitles">` child element.
+- Verify caption tracks have a valid `src` attribute pointing to a `.vtt` or `.srt` file.
+
+### 1.2.3 Audio Description or Media Alternative (Prerecorded)
+An alternative for time-based media or audio description must be provided for prerecorded video content.
+- Identify `<video>` elements missing both `<track kind="descriptions">` and an adjacent text transcript.
+
+### 1.3.1 Info and Relationships
+Information, structure, and relationships conveyed through presentation must be programmatically determinable.
+- **Heading hierarchy**: Verify logical sequence — `<h2>` must follow `<h1>`, `<h3>` must follow `<h2>`, etc. Identify skipped heading levels (e.g., `<h1>` followed directly by `<h3>`). Identify multiple `<h1>` elements within a single view.
+- **Form associations**: Verify every `<input>`, `<select>`, and `<textarea>` is programmatically linked to a `<label>` via matching `for`/`id` attributes, wrapping `<label>`, `aria-label`, or `aria-labelledby`.
+- **Table structure**: Verify data tables use `<th>` elements with `scope="col"` or `scope="row"`. Identify layout tables that should use `role="presentation"` or `role="none"`.
+- **List structure**: Verify list content uses `<ul>`, `<ol>`, or `<dl>` rather than styled `<div>`/`<span>` sequences. Identify `<li>` elements not wrapped in `<ul>` or `<ol>`.
+- **Landmark regions**: Verify pages use semantic landmarks (`<header>`, `<nav>`, `<main>`, `<aside>`, `<footer>`) or equivalent ARIA roles. Identify pages missing a `<main>` landmark.
+- **Fieldset/legend**: Verify grouped form controls (radio buttons, checkboxes) are wrapped in `<fieldset>` with a `<legend>`.
+
+### 1.3.2 Meaningful Sequence
+The correct reading sequence can be programmatically determined when the sequence affects meaning.
+- Identify CSS properties (`order`, `flex-direction: row-reverse`, `flex-direction: column-reverse`, `direction: rtl`, `float`, absolute/fixed positioning) that cause visual order to deviate from DOM source order in a way that could break meaning or reading flow.
+- Verify tabindex values do not force a reading order different from visual order.
+
+### 1.3.3 Sensory Characteristics
+Instructions must not rely solely on sensory characteristics such as shape, color, size, visual location, orientation, or sound.
+- Identify instructional text referencing position ("the button on the right"), shape ("the round icon"), color ("click the green button"), or size alone without additional non-sensory cues.
+
+### 1.4.1 Use of Color
+Color must not be the only visual means of conveying information, indicating an action, prompting a response, or distinguishing a visual element.
+- Identify form validation that uses only color change (red border) without an icon, text message, or `aria-invalid` attribute.
+- Identify links within body text distinguished only by color without underline, bold, or other non-color indicator.
+- Identify charts or graphs that rely solely on color to differentiate data series without patterns, labels, or legends.
+
+### 1.4.2 Audio Control
+If audio plays automatically for more than 3 seconds, a mechanism must exist to pause, stop, or control volume independently.
+- Identify `<audio autoplay>` or `<video autoplay>` elements. Verify a pause/stop mechanism exists and is keyboard accessible.
+
+## Operable
+
+### 2.1.1 Keyboard
+All functionality must be operable through a keyboard interface without requiring specific timings for individual keystrokes.
+- Identify interactive DOM nodes (`<div>`, `<span>`, `<a>` without `href`, custom elements) with `onClick`/`@click` handlers lacking `onKeyDown`/`onKeyUp`/`onKeyPress` keyboard handlers.
+- Verify all custom interactive components implement appropriate keyboard patterns (Enter/Space for buttons, arrow keys for menus/tabs/tree views).
+- Verify `tabindex` is never greater than `0`. Only `0` (document-order focusable) and `-1` (programmatically focusable) are permitted.
+- Identify elements with `role="button"`, `role="link"`, `role="tab"`, or `role="menuitem"` that are not focusable (`tabindex="0"` or native focusable element).
+
+### 2.1.2 No Keyboard Trap
+If keyboard focus can be moved to a component using a keyboard interface, focus must be movable away using only a keyboard interface.
+- Identify modal dialogs, overlays, and popups that do not trap focus within the component or do not release focus back on close.
+- Identify components that capture focus without providing an Escape key or documented mechanism to release.
+- Verify modal dialogs implement proper focus trap (focus cycling within the modal) and return focus to the trigger element on close.
+
+### 2.1.4 Character Key Shortcuts (WCAG 2.1)
+If single character key shortcuts exist, they must be remappable, disableable, or only active when the relevant component has focus.
+- Identify global keyboard event listeners (`document.addEventListener('keydown', ...)`) that trigger actions on single character keys (letters, numbers, punctuation) without modifier keys (Ctrl, Alt, Shift, Meta).
+
+### 2.2.1 Timing Adjustable
+If time limits are set by content, the user must be able to turn off, adjust, or extend the time limit.
+- Identify `setTimeout`, `setInterval`, or `requestAnimationFrame` patterns driving auto-redirects, session timeouts, or content expiration without user notification or extension mechanism.
+- Identify auto-advancing carousels or slideshows lacking pause controls.
+
+### 2.2.2 Pause, Stop, Hide
+For moving, blinking, scrolling, or auto-updating content, the user must be able to pause, stop, or hide it.
+- Identify CSS animations (`animation`, `@keyframes`, `transition` running continuously) on content that starts automatically, lasts more than 5 seconds, and lacks a pause mechanism.
+- Identify auto-scrolling tickers, marquees, or carousels without pause/stop controls.
+- Verify respect for `prefers-reduced-motion` media query — animations should be reduced or disabled when the user prefers reduced motion.
+
+### 2.3.1 Three Flashes or Below Threshold
+Content must not flash more than three times in any one-second period.
+- Identify CSS animations or JavaScript-driven visual effects that could produce rapid flashing (e.g., rapid `opacity` or `background-color` cycling with duration below 333ms).
+
+### 2.4.1 Bypass Blocks
+A mechanism must exist to bypass blocks of content repeated across multiple pages.
+- Verify a "Skip to main content" link exists as the first focusable element on each page. The link must be visible on focus and target the `<main>` region or an `id` at the start of the primary content area.
+- Verify landmark regions (`<nav>`, `<main>`, `<aside>`) are used to allow assistive technology navigation.
+
+### 2.4.2 Page Titled
+Web pages must have titles that describe topic or purpose.
+- Verify each page/route has a descriptive `<title>` element (for SPAs, verify dynamic `document.title` updates on route changes).
+- Identify pages with generic titles ("Untitled", "Page", empty string) or pages sharing identical titles across different views.
+
+### 2.4.3 Focus Order
+If content can be navigated sequentially and navigation sequences affect meaning or operation, focusable components must receive focus in an order that preserves meaning and operability.
+- Identify positive `tabindex` values (`tabindex="2"`, `tabindex="5"`, etc.) that override natural DOM order.
+- Verify that modal dialogs, drawers, and popovers move focus into the component when opened and return focus when closed.
+- Identify dynamically inserted content that should receive focus but does not (e.g., inline error messages, expanded sections).
+
+### 2.4.4 Link Purpose (In Context)
+The purpose of each link must be determinable from the link text alone or from the link text together with its programmatically determined context.
+- Identify links with generic text ("Click here", "Read more", "Learn more", "Here", "Link") without `aria-label`, `aria-labelledby`, or surrounding context that clarifies purpose.
+- Identify empty links (`<a href="..."></a>`) or links containing only an icon without accessible text.
+
+### 2.5.1 Pointer Gestures (WCAG 2.1)
+Functionality operated via multipoint or path-based gestures must also be operable with a single pointer without a path-based gesture.
+- Identify swipe-dependent carousels, pinch-to-zoom, or multi-finger gesture handlers that lack single-tap/click button alternatives (next/previous buttons, zoom controls).
+
+### 2.5.2 Pointer Cancellation (WCAG 2.1)
+For single-pointer functionality, at least one of the following must be true: no down-event, can abort/undo, up reversal.
+- Identify `mousedown`, `touchstart`, or `pointerdown` event handlers that trigger irreversible actions without confirmation or undo. Actions should trigger on `mouseup`/`click`/`pointerup` instead.
+
+### 2.5.3 Label in Name (WCAG 2.1)
+For UI components with labels that include text or images of text, the accessible name must contain the text that is presented visually.
+- Identify components where `aria-label` or `aria-labelledby` produces an accessible name that does not contain the visible label text (e.g., button visually reads "Submit Order" but `aria-label="Place"`) .
+- Verify that `aria-label` on a button matches or contains the visible text on that button.
+
+### 2.5.4 Motion Actuation (WCAG 2.1)
+Functionality triggered by device motion (shake, tilt) must also be operable via UI controls and can be disabled.
+- Identify `DeviceMotionEvent` or `DeviceOrientationEvent` listeners that trigger functionality without an equivalent on-screen control.
+
+## Understandable
+
+### 3.1.1 Language of Page
+The default human language of each page must be programmatically determinable.
+- Verify the `<html>` element includes a valid `lang` attribute (e.g., `lang="en"`, `lang="fr"`).
+- Identify missing or empty `lang` attributes on the root `<html>` element.
+
+### 3.2.1 On Focus
+Receiving focus must not initiate a change of context.
+- Identify `onfocus` or `onFocus` handlers that trigger navigation, form submission, or modal opening.
+
+### 3.2.2 On Input
+Changing the setting of any UI component must not automatically cause a change of context unless the user has been advised beforehand.
+- Identify `<select>` elements with `onChange` handlers that trigger navigation or form submission without a separate submit button.
+- Identify radio buttons or checkboxes that trigger page navigation on change.
+
+### 3.3.1 Error Identification
+If an input error is automatically detected, the item in error must be identified and the error described to the user in text.
+- Identify form validation that only uses visual indicators (red border, color change) without text error messages.
+- Verify error messages are programmatically associated with inputs via `aria-describedby`, `aria-errormessage`, or adjacent text.
+- Verify `aria-invalid="true"` is set on inputs in an error state.
+
+### 3.3.2 Labels or Instructions
+Labels or instructions must be provided when content requires user input.
+- Verify all form inputs have visible labels (not just placeholder text).
+- Identify inputs relying solely on `placeholder` as the label — placeholders disappear on input and are insufficient.
+- Verify required fields are indicated both visually and programmatically (`aria-required="true"` or `required` attribute).
+- Verify expected format instructions are provided (e.g., "MM/DD/YYYY" for date fields).
+
+## Robust
+
+### 4.1.2 Name, Role, Value
+For all UI components, the name, role, and state must be programmatically determinable; states/values must be settable by user agents and assistive technologies.
+- Identify custom components (dropdowns, toggles, accordions, tabs, sliders) built from `<div>`/`<span>` without appropriate ARIA roles (`role="combobox"`, `role="switch"`, `role="tablist"`, `role="slider"`, etc.).
+- Verify custom toggles/checkboxes communicate state via `aria-checked`, `aria-expanded`, `aria-selected`, or `aria-pressed`.
+- Verify custom comboboxes/dropdowns use `aria-expanded`, `aria-haspopup`, and `aria-activedescendant` or equivalent.
+- Identify duplicate `id` attributes in the DOM that could break label associations or ARIA references.
+
+---
+
+# Diagnostic Ruleset Matrix: WCAG 2.1 Level AA
+
+## Perceivable
+
+### 1.2.4 Captions (Live)
+Captions must be provided for all live audio content in synchronized media.
+- Identify live video/audio streaming components without live captioning integration or instructions for enabling captions.
+
+### 1.2.5 Audio Description (Prerecorded)
+Audio description must be provided for all prerecorded video content in synchronized media.
+- Identify `<video>` elements without `<track kind="descriptions">` and without an adjacent audio-described version link.
+
+### 1.3.4 Orientation (WCAG 2.1)
+Content must not restrict its view and operation to a single display orientation unless a specific orientation is essential.
+- Identify CSS or JavaScript that locks the page to portrait or landscape mode (`orientation: portrait` in media queries enforced with no alternative, or `screen.orientation.lock()`).
+
+### 1.3.5 Identify Input Purpose (WCAG 2.1)
+The purpose of each input field collecting information about the user must be programmatically determinable.
+- Identify `<input>` fields for personal data (name, email, phone, address, credit card, password) that lack the `autocomplete` attribute.
+- Expected values: `name`, `given-name`, `family-name`, `email`, `tel`, `street-address`, `postal-code`, `country`, `cc-number`, `cc-exp`, `cc-csc`, `username`, `current-password`, `new-password`, `one-time-code`, `bday`, etc.
+
+### 1.4.3 Contrast (Minimum)
+Text and images of text must have a contrast ratio of at least 4.5:1 (3:1 for large text, 18pt+ or 14pt+ bold).
+- Analyze foreground/background color combinations in CSS. Identify hardcoded color pairs falling below the 4.5:1 threshold for normal text or 3:1 for large text.
+- Check text over gradient or image backgrounds — verify sufficient contrast at all points.
+- Verify placeholder text meets contrast requirements (placeholders are often too light).
+- Identify disabled elements — note that disabled controls are exempt from contrast requirements.
+
+### 1.4.4 Resize Text
+Text must be resizable up to 200% without loss of content or functionality.
+- Identify text sized in absolute units (`px`) on `<body>` or root elements without `rem`/`em` equivalents.
+- Identify `overflow: hidden` on containers that could clip text when zoomed.
+- Identify fixed-height containers with text that could overflow when font size increases.
+
+### 1.4.5 Images of Text
+If the technologies being used can achieve the visual presentation, text must be used to convey information rather than images of text.
+- Identify `<img>` elements containing photographs of text, banners with embedded text, or buttons rendered as images when CSS-styled text would suffice.
+
+### 1.4.10 Reflow (WCAG 2.1)
+Content must be presentable without loss of information or functionality and without requiring scrolling in two dimensions at 320 CSS pixels wide (for vertical content) or 256 CSS pixels tall (for horizontal content).
+- Identify horizontal scrollbars at 320px viewport width caused by fixed-width layouts, `min-width` values exceeding 320px, or non-wrapping flex/grid containers.
+- Identify `overflow-x: scroll` or `overflow-x: auto` on main content containers.
+
+### 1.4.11 Non-text Contrast (WCAG 2.1)
+The visual presentation of UI components and graphical objects must have a contrast ratio of at least 3:1 against adjacent colors.
+- Identify form input borders, focus indicators, icon buttons, and chart elements with border/fill colors below 3:1 contrast against their background.
+- Verify custom checkbox/radio/toggle visual indicators meet 3:1 contrast.
+- Verify icon-only buttons have sufficient contrast.
+
+### 1.4.12 Text Spacing (WCAG 2.1)
+No loss of content or functionality must occur when users override text spacing (line height 1.5x font size, paragraph spacing 2x font size, letter spacing 0.12x font size, word spacing 0.16x font size).
+- Identify fixed-height containers (`height` instead of `min-height`) that could clip text when spacing increases.
+- Identify `overflow: hidden` paired with fixed dimensions that would hide text.
+- Identify CSS that overrides user text spacing preferences via `!important` on `line-height`, `letter-spacing`, or `word-spacing`.
+
+### 1.4.13 Content on Hover or Focus (WCAG 2.1)
+Additional content triggered by hover or keyboard focus must be dismissible (without moving hover/focus), hoverable (pointer can move to the new content), and persistent (remains visible until dismissed or trigger is removed).
+- Identify tooltips, popovers, or dropdown menus that disappear when the user tries to move the pointer to the tooltip content.
+- Identify hover-triggered content without an Escape key dismissal mechanism.
+- Identify CSS-only `:hover` menus that cannot be triggered via keyboard `:focus` or `:focus-within`.
+
+## Operable
+
+### 2.4.5 Multiple Ways
+More than one way must be available to locate a web page within a set of pages.
+- Verify that navigation, site search, sitemap, or table of contents mechanisms exist.
+
+### 2.4.6 Headings and Labels
+Headings and labels must describe topic or purpose.
+- Identify generic headings ("Section 1", "Details", "Info") that do not describe their content.
+- Identify form labels that do not describe the expected input (e.g., "Field 1" instead of "Email address").
+
+### 2.4.7 Focus Visible
+Any keyboard-operable user interface must have a mode of operation where the keyboard focus indicator is visible.
+- Analyze CSS for `outline: none`, `outline: 0`, or `box-shadow: none` applied to focusable elements (`:focus`) without a visible alternative via `:focus-visible` or custom focus styling.
+- Verify focus indicators have sufficient contrast (at least 3:1 against adjacent colors per WCAG 2.2 guidance).
+- Verify focus indicators are visible on all interactive elements: links, buttons, inputs, selects, textareas, and custom interactive components.
+- Identify `*:focus { outline: none }` global resets without corresponding `:focus-visible` replacements.
+
+## Understandable
+
+### 3.1.2 Language of Parts
+The human language of each passage or phrase in the content must be programmatically determinable when it differs from the default page language.
+- Identify inline text in a different language from the page's `lang` attribute that lacks a `lang` attribute on its container element.
+
+### 3.2.3 Consistent Navigation
+Navigational mechanisms repeated across multiple pages must occur in the same relative order each time they are repeated.
+- Verify navigation menus, headers, and footers maintain the same structural order across views/routes.
+
+### 3.2.4 Consistent Identification
+Components that have the same functionality within a set of pages must be identified consistently.
+- Identify the same action labeled differently across pages (e.g., "Search" on one page, "Find" on another, "Look up" on a third).
+
+### 3.3.3 Error Suggestion
+If an input error is automatically detected and suggestions for correction are known, the suggestions must be provided to the user unless it would jeopardize security or purpose.
+- Identify form validation that reports errors without suggesting the expected format or valid values (e.g., "Invalid email" without "Please enter an email in the format name@example.com").
+
+### 3.3.4 Error Prevention (Legal, Financial, Data)
+For pages causing legal commitments or financial transactions, submissions must be reversible, data must be checked for errors, or a confirmation mechanism must exist.
+- Identify checkout, payment, or legal agreement forms that submit without a review/confirmation step.
+- Identify data deletion actions without an undo or confirmation dialog.
+
+### 4.1.3 Status Messages (WCAG 2.1)
+Status messages must be programmatically determinable through role or properties so they can be presented to the user by assistive technologies without receiving focus.
+- Identify toast notifications, snackbar components, inline success/error messages, loading indicators, and search result counts that appear dynamically without `aria-live="polite"`, `aria-live="assertive"`, `role="alert"`, `role="status"`, or `role="log"`.
+- Verify `aria-live` regions exist in the DOM before content is injected (late-added `aria-live` regions may not be announced).
+
+---
+
+# Diagnostic Ruleset Matrix: WCAG 2.2 Level A Additions
+
+### 3.2.6 Consistent Help
+If a help mechanism (contact information, human contact, self-help option, automated contact) is provided on multiple pages, it must be in a consistent location relative to other content.
+- Verify help links, chat widgets, or support contact details appear in the same relative position across all pages/views.
+- Identify help mechanisms that move positions between pages.
+
+### 3.3.7 Redundant Entry
+Information previously entered by or provided to the user that is required to be entered again in the same process must either be auto-populated or available for the user to select.
+- Identify multi-step forms (wizards) that require the user to re-enter previously provided information (e.g., re-typing email, address, or name on a later step).
+- Verify that previously entered data is auto-populated or selectable from a list in subsequent steps.
+
+---
+
+# Diagnostic Ruleset Matrix: WCAG 2.2 Level AA Additions
+
+### 2.4.11 Focus Not Obscured (Minimum)
+When a UI component receives keyboard focus, the component must not be entirely hidden by author-created content.
+- Perform a cross-reference analysis of layout CSS. Identify elements utilizing `position: sticky` or `position: fixed` combined with elevated `z-index` properties.
+- Verify the parent scrolling viewport container (`<html>`, `<body>`, or a designated overflow wrapper) implements `scroll-padding-top` or `scroll-padding-bottom` to prevent focused elements from being visually occluded beneath fixed overlays.
+- Identify sticky headers, floating action buttons, cookie banners, or chat widgets that could cover focused elements.
+- Verify that focused elements are scrolled into view and not hidden behind sticky/fixed elements.
+
+### 2.5.7 Dragging Movements
+Functionality that uses a dragging movement must also be operable by a single pointer without dragging.
+- Identify drag-and-drop interfaces (sortable lists, kanban boards, file upload drop zones, range sliders) that lack a single-pointer alternative (e.g., move up/down buttons, click-to-select-and-place, typed input for range values).
+- Verify custom `<input type="range">` sliders can also be operated via keyboard arrow keys and direct value input.
+
+### 2.5.8 Target Size (Minimum)
+The size of the target for pointer inputs must be at least 24x24 CSS pixels, or adequate spacing must exist so a 24px diameter circle centered on the target bounding box does not intersect another target.
+- Analyze `width`, `height`, `padding`, and `min-width`/`min-height` of all interactive elements (buttons, links, form controls, custom interactive components).
+- If computed visual target size falls below 24x24 CSS pixels and surrounding `margin`/`gap` is insufficient to prevent a 24px circle overlap with adjacent targets, register a violation.
+- Exemptions: inline links within text blocks, user-agent default-styled controls, legally/essentially required sizes.
+
+### 3.3.8 Accessible Authentication (Minimum)
+Cognitive function tests (remembering passwords, solving puzzles, transcribing codes) must not be required for any step in an authentication process unless an alternative is provided.
+- Locate all `<input type="password">` and token/OTP input elements.
+- Identify event listeners that block clipboard paste operations: `onPaste={(e) => e.preventDefault()}`, `addEventListener('paste', ...)` with `preventDefault()`. Blocking paste on password/OTP fields is a critical failure.
+- Verify `autocomplete` attributes are present on credential fields: `autocomplete="username"`, `autocomplete="current-password"`, `autocomplete="new-password"`, `autocomplete="one-time-code"`.
+- Identify CAPTCHA implementations that rely solely on cognitive tests without an alternative (e.g., audio CAPTCHA, passkey support, or third-party authentication).
+
+---
+
+# Severity Alignment Taxonomy
+
+Assign a precise severity rating to each discovered violation based upon the Axe-core impact classification framework:
+- **Critical (Weight 10)**: Non-interference violations. The anomaly creates an absolute blockade preventing the user from completing a fundamental action (e.g., keyboard traps, blocked password pasting mechanisms, entirely obscured focus states, missing accessible names on primary navigation elements).
+- **High (Weight 7)**: Severe interactive barriers lacking intuitive workarounds (e.g., missing alternative text on critical action buttons, disconnected form labels, profound chromatic contrast failures below 3:1, custom components without ARIA roles).
+- **Medium (Weight 3)**: Structural friction causing significant perceptual slowdowns but not preventing ultimate execution (e.g., undersized target boundaries violating 2.5.8, missing assertive attributes on non-critical status updates, heading level skips, missing `autocomplete` attributes, inconsistent navigation).
+- **Low (Weight 1)**: Technical deviations introducing minor annoyance (e.g., redundant text strings on decorative imagery, sequential anomalies deep within secondary architectures, missing `lang` on secondary-language phrases, generic heading text).
+
+---
+
+# Axe-core Rule ID Cross-Reference
+
+When reporting violations, include the corresponding Axe-core rule ID when applicable to facilitate automated tooling alignment:
+
+| WCAG Criterion | Axe-core Rule IDs |
+|---|---|
+| 1.1.1 Non-Text Content | `image-alt`, `input-image-alt`, `svg-img-alt`, `object-alt`, `area-alt`, `role-img-alt` |
+| 1.3.1 Info and Relationships | `aria-required-children`, `aria-required-parent`, `definition-list`, `dlitem`, `list`, `listitem`, `th-has-data-cells`, `td-has-header`, `label`, `empty-heading` |
+| 1.3.5 Identify Input Purpose | `input-autocomplete-valid` |
+| 1.4.1 Use of Color | `link-in-text-block` |
+| 1.4.3 Contrast (Minimum) | `color-contrast` |
+| 1.4.11 Non-text Contrast | `color-contrast-enhanced` (partial) |
+| 2.1.1 Keyboard | `scrollable-region-focusable`, `nested-interactive` |
+| 2.1.2 No Keyboard Trap | `no-trap-focus` (manual check typically required) |
+| 2.4.1 Bypass Blocks | `bypass`, `region` |
+| 2.4.2 Page Titled | `document-title` |
+| 2.4.4 Link Purpose | `link-name` |
+| 2.4.7 Focus Visible | `focus-visible` (manual CSS audit required) |
+| 2.5.3 Label in Name | `label-content-name-mismatch` |
+| 3.1.1 Language of Page | `html-has-lang`, `html-lang-valid`, `html-xml-lang-mismatch` |
+| 3.1.2 Language of Parts | `valid-lang` |
+| 3.3.1 Error Identification | `aria-input-field-name` (partial) |
+| 3.3.2 Labels or Instructions | `label`, `select-name` |
+| 4.1.2 Name, Role, Value | `aria-allowed-attr`, `aria-hidden-focus`, `aria-prohibited-attr`, `aria-roles`, `aria-valid-attr`, `aria-valid-attr-value`, `button-name`, `duplicate-id-aria` |
+| 4.1.3 Status Messages | (manual check — verify `aria-live` regions) |
+
+---
+
+# Output Generation Schema
+
+For each unique accessibility violation discovered during the analysis, you must output the diagnostic data strictly utilizing the following Markdown formatting structure. Do not deviate from this schema.
+
+**Issue:**
+**WCAG Criterion:** [e.g., 1.1.1 Non-Text Content]
+**Level:** [A | AA]
+**Axe Rule ID:** [e.g., `image-alt` — include when applicable, "Manual check" otherwise]
+**Page or file it occurs:** [Provide the absolute or relative file path within the repository]
+**Line(s):** [Line number(s) or range where the violation occurs]
+**Severity:** [Critical | High | Medium | Low]
+**Impact:** [Describe who is affected — screen reader users, keyboard users, low-vision users, motor-impaired users, cognitive disability users, etc.]
+**Suggest fixes:** [Provide specific code-level remediation with before/after examples when possible]
